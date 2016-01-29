@@ -1,0 +1,243 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/paper-button/paper-button.html">
+<link rel="import" href="bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="bower_components/iron-icons/iron-icons.html">
+
+<dom-module id="survey-run">
+<template>
+  <style>
+    :host {
+      display: inline-block;
+      padding: 20px;
+    }
+    .questionCard {
+      width: 100%;
+      float: left;
+      border: 1px solid #000;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .question {
+      padding: 10px;
+    }
+    .answers {
+      margin: 0 30px 10px 30px;
+    }
+    .buttons {
+
+    }
+  </style>
+  <h4 class="modal-title"><b>{{ data.name }}</b></h4>
+
+  <template is="dom-repeat" items="{{ questions }}" as="question">
+    <div vertical layout class="questionCard">
+      <div class="question"><b>{{ getOrder(index) }}.) {{ question.name }}</b></div>
+      
+      <div class="answers">
+        <!-- m2o: radio buttons -->
+        <template is="dom-if" if="{{ equals(question.type, 'm2o') }}">
+          <paper-radio-group selected="{{ answers[question.name] }}">
+            <template is="dom-repeat" items="{{ question.options }}" as="answer">
+                <paper-radio-button name="{{ answer }}" value="{{ answer }}" style="padding: 5px;">{{ answer }}</paper-radio-button><br />
+            </template>
+          </paper-radio-group>
+        </template>
+
+        <!-- m2m: check boxes -->
+        <template is="dom-if" if="{{ equals(question.type, 'm2m') }}">
+          <template is="dom-repeat" items="{{ question.options }}" as="answer">
+            <paper-checkbox label="{{ answer }}" title="{{ question.name }}" on-tap="{{ check }}"
+                            style="margin-top: 10px;width: 100%;">{{ answer }}</paper-checkbox>
+          </template>
+        </template>
+
+        <!-- rating -->
+        <template is="dom-if" if="{{ equals(question.type, 'rating') }}">
+          <x-ratings qid="{{ question.id }}" score="{{ answers[question.name] }}"></x-ratings>
+        </template>
+
+        <!-- fill -->
+        <template is="dom-if" if="{{ equals(question.type, 'fill') }}">
+          <paper-textarea style="width: 100%;" value="{{ answers[question.name] }}"></paper-textarea>
+        </template>
+      </div>
+    </div>
+  </template>
+
+    <div horizontal around-justified layout style="">
+      <div>
+        <paper-button raised on-tap="finish" style="">Дуусгах</paper-button>
+      </div>
+    </div>
+
+</template>
+
+<script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'survey-run',
+
+      properties: {
+        data: {
+          type: Object,
+          value: function() {
+            return {}
+          },
+          //observer: "_dataChanged"
+        },
+        questions: {
+          type: Object,
+          value: function() {
+            return [
+                      {
+                        'id':'testId',
+                        'question':'Poll',
+                        'name':'Single',
+                        'type':'m2o',
+                        'options':['Excellent','Good','Fine','Bad','Awful']
+                      },
+                      { 
+                        'id':'testId1',
+                        'question':'Poll1',
+                        'name':'Multi',
+                        'type':'m2m',
+                        'options':['Excellent','Good','Fine','Bad','Awful']
+                      },
+                      {
+                        'id':'testId2',
+                        'question':'q2',
+                        'name':'Fill',
+                        'type':'fill'
+                      },
+                      {
+                        'id' : 'testId3',
+                        'type' : 'rating',
+                        'name' : 'Rate me'
+                      }
+                    ];
+          }
+        }
+      },
+      ready: function(){
+        //if(this.data !== null && this.data !== undefined){
+        //  this.questions = this.data['questions'];
+        //}
+        console.log(this.questions[0].options);
+      },
+
+      finish: function(e){
+        console.log("on-finish");
+      },
+
+      equals: function(value1, value2){
+        return value1 == value2;
+      },
+
+      getOrder: function(index){
+        return +index + 1;
+      }
+    });
+
+  })();
+</script>
+</dom-module>
+
+
+ <dom-module id="x-ratings">
+    <template>
+        <style>
+            :host {
+                display: inline-block;
+                white-space: nowrap;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+            }
+            core-icon-button {
+                height: 48px;
+                width: 48px;
+            }
+            .label-text {font-size: 12px; color: #4285f4}
+        </style>
+        <!-- <input value="{{ count }}" type="number"/> -->
+          <template is="dom-repeat" items="[[ stars ]]" as="star">
+            <paper-icon-button icon$="[[ star.icon ]]" data-id="[[ index ]]" on-tap="updateValue" style="color: #3f51b5;"></paper-icon-button>        
+          </template>
+    </template>
+
+    <script>
+      (function() {
+        'use strict';
+
+        Polymer({
+          is: 'x-ratings',
+
+          properties: {
+            count : {
+              type: Number,
+              value: null,
+              notify: true
+            },
+            stars: {
+              type: Array,
+              notify:true,
+              reflectToAttribute: true,
+              value: function() { return []; }
+            },
+            score: Number
+          },
+
+          observers: [
+            '_countChanged(count)'
+          ],
+
+          created: function(){
+
+          },
+
+          ready: function(){
+            this.count = 5;
+            this.score = null;
+          },
+
+          _countChanged: function(e){
+            console.log('handler: _countChanged ' + this.count);
+            if(this.count !== undefined && this.count !== null){
+              this.stars = [];
+              for (var i = 0; i < this.count; i++) {
+                var obj = {'index': i,
+                           'icon':'star-border'};
+                  this.push("stars", obj);
+              }
+              this.score = 0;
+              this.notifyPath('stars',this.stars);
+              console.log(this.stars);
+            }
+          },
+          updateValue: function(e){
+            console.log('handler: updateValue');
+            var i = e.currentTarget.dataId;
+            this.score = parseInt(i) + 1;
+            if(this.score !== undefined){
+              if(this.score === null){
+                  this.score = 0;
+              }
+
+              for (var i = 0; i < this.count; i++) {
+                  this.stars[i].icon = (i < this.score ? 'star' : 'star-border');
+                  var path = 'stars.' + i + '.icon';
+                  this.notifyPath(path,this.stars[i].icon);
+              }
+            }
+          },
+        });
+
+      })();
+    </script>
+</dom-module>
